@@ -44,18 +44,17 @@ public class OrderDAO {
         }
     }
 
-
-    // Cập nhật đơn hàng
     public void updateOrder(Order order, int orderId) {
         String query = "UPDATE Orders SET customer_id = ?, total_amount = ?, order_date = ?, status = ? WHERE order_id = ?";
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
-            stmt.setInt(1, order.getCustomerId());
-            stmt.setDouble(2, order.getTotalAmount());
-            stmt.setString(3, order.getOrderDate());
-            stmt.setString(4, order.getStatus());
+            stmt.setInt(1, order.getCustomerId());  // Cập nhật customer_id
+            stmt.setDouble(2, order.getTotalAmount());  // Cập nhật tổng tiền
+            stmt.setString(3, order.getOrderDate());  // Cập nhật ngày đặt hàng
+            stmt.setString(4, order.getStatus());  // Cập nhật trạng thái
             stmt.setInt(5, orderId);  // Cập nhật theo orderId
-            stmt.executeUpdate();
-            System.out.println("Order updated: " + orderId);
+
+            stmt.executeUpdate();  // Thực hiện cập nhật
+            System.out.println("Đơn hàng với ID " + orderId + " đã được cập nhật.");
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -131,15 +130,14 @@ public class OrderDAO {
 
         return orders;
     }
-
     public void deleteOrder(int orderId) {
         // Xóa các bản ghi trong bảng payments có liên quan đến orderId
         String deletePaymentsQuery = "DELETE FROM payments WHERE order_id = ?";
         try (PreparedStatement stmt = connection.prepareStatement(deletePaymentsQuery)) {
-            stmt.setInt(1, orderId);
-            int rowsAffected = stmt.executeUpdate();
+            stmt.setInt(1, orderId);  // Gán orderId vào câu lệnh SQL
+            int rowsAffected = stmt.executeUpdate();  // Thực hiện xóa
             if (rowsAffected > 0) {
-                System.out.println("Deleted payment records for orderId: " + orderId);
+                System.out.println("Đã xóa các bản ghi thanh toán cho orderId: " + orderId);
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -148,27 +146,26 @@ public class OrderDAO {
         // Xóa các mục trong bảng order_items có liên quan đến orderId
         String deleteItemsQuery = "DELETE FROM order_items WHERE order_id = ?";
         try (PreparedStatement stmt = connection.prepareStatement(deleteItemsQuery)) {
-            stmt.setInt(1, orderId);
-            int rowsAffected = stmt.executeUpdate();
+            stmt.setInt(1, orderId);  // Gán orderId vào câu lệnh SQL
+            int rowsAffected = stmt.executeUpdate();  // Thực hiện xóa
             if (rowsAffected > 0) {
-                System.out.println("Deleted order items for orderId: " + orderId);
+                System.out.println("Đã xóa các mục trong order_items cho orderId: " + orderId);
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
 
         // Xóa đơn hàng trong bảng orders
-        String query = "DELETE FROM Orders WHERE order_id = ?";
-        try (PreparedStatement stmt = connection.prepareStatement(query)) {
-            stmt.setInt(1, orderId);
-            int rowsAffected = stmt.executeUpdate();
+        String deleteOrderQuery = "DELETE FROM Orders WHERE order_id = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(deleteOrderQuery)) {
+            stmt.setInt(1, orderId);  // Gán orderId vào câu lệnh SQL
+            int rowsAffected = stmt.executeUpdate();  // Thực hiện xóa
             if (rowsAffected > 0) {
-                System.out.println("Order deleted with ID: " + orderId);
+                System.out.println("Đơn hàng với ID " + orderId + " đã được xóa.");
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
-
 
 }

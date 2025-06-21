@@ -9,6 +9,8 @@ import dao.*;
 import strategy.*;
 import adapter.*;
 import java.util.*;
+import factory.users.*;
+import model.customers.*;
 
 public class MainApp {
 
@@ -103,7 +105,9 @@ public class MainApp {
         System.out.println("\n--- Quản lý đơn hàng ---");
         System.out.println("1. Tạo đơn hàng");
         System.out.println("2. Xem danh sách đơn hàng");
-        System.out.println("3. Thoát");
+        System.out.println("3. Sửa đơn hàng");
+        System.out.println("4. Xóa đơn hàng");
+        System.out.println("5. Thoát");
 
         int choice = scanner.nextInt();
         switch (choice) {
@@ -114,11 +118,18 @@ public class MainApp {
                 viewOrders();  // Xem danh sách đơn hàng
                 break;
             case 3:
+                updateOrder(scanner);  // Sửa đơn hàng
+                break;
+            case 4:
+                deleteOrder(scanner);  // Xóa đơn hàng
+                break;
+            case 5:
                 return;  // Quay lại menu
             default:
                 System.out.println("Lựa chọn không hợp lệ.");
         }
     }
+
 
     // Tạo đơn hàng, bao gồm lựa chọn sản phẩm và phương thức thanh toán
     private static void createOrder(Scanner scanner, User loggedInUser) {
@@ -187,6 +198,63 @@ public class MainApp {
         paymentStrategy.pay(totalAmount);
         System.out.println("Đơn hàng đã được tạo thành công.");
     }
+    private static void updateOrder(Scanner scanner) {
+        // Yêu cầu người dùng nhập ID đơn hàng cần cập nhật
+        System.out.println("Nhập ID đơn hàng cần sửa:");
+        int orderId = scanner.nextInt();
+        scanner.nextLine();  // Đọc ký tự newline còn sót lại
+
+        // Yêu cầu người dùng nhập các thông tin mới cho đơn hàng
+        System.out.println("Nhập customer_id mới:");
+        int customerId = scanner.nextInt();
+
+        System.out.println("Nhập tổng số tiền mới:");
+        double totalAmount = scanner.nextDouble();
+        scanner.nextLine();  // Đọc ký tự newline còn sót lại
+
+        System.out.println("Nhập ngày đặt hàng mới (yyyy-MM-dd):");
+        String orderDate = scanner.nextLine();
+
+        System.out.println("Nhập trạng thái đơn hàng mới (Pending, Shipped, Delivered, Cancelled):");
+        String status = scanner.nextLine();
+
+        // Yêu cầu người dùng chọn kiểu đơn hàng (Express hoặc Standard)
+        System.out.println("Chọn loại đơn hàng:");
+        System.out.println("1. Express Order");
+        System.out.println("2. Standard Order");
+        int orderType = scanner.nextInt();
+
+        // Tạo đối tượng Order từ Factory
+        Order order = null;
+
+        // Dùng Factory để tạo đối tượng đơn hàng đúng kiểu
+        if (orderType == 1) {
+            order = new ExpressOrder(customerId, totalAmount, orderDate, status);
+        } else if (orderType == 2) {
+            order = new StandardOrder(customerId, totalAmount, orderDate, status);
+        } else {
+            System.out.println("Lựa chọn không hợp lệ.");
+            return;
+        }
+
+        // Gọi phương thức updateOrder trong OrderDAO để cập nhật đơn hàng
+        OrderDAO orderDAO = new OrderDAO();
+        orderDAO.updateOrder(order, orderId);  // Cập nhật đơn hàng trong cơ sở dữ liệu
+
+        System.out.println("Đơn hàng đã được cập nhật.");
+    }
+
+    private static void deleteOrder(Scanner scanner) {
+        System.out.println("Nhập ID đơn hàng cần xóa:");
+        int orderId = scanner.nextInt();
+
+        // Gọi phương thức deleteOrder trong OrderDAO để xóa đơn hàng
+        OrderDAO orderDAO = new OrderDAO();
+        orderDAO.deleteOrder(orderId);  // Xóa đơn hàng từ cơ sở dữ liệu
+
+        System.out.println("Đơn hàng đã được xóa.");
+    }
+
 
     private static void viewOrders() {
         OrderDAO orderDAO = new OrderDAO();
@@ -350,32 +418,78 @@ public class MainApp {
     }
 
     private static void addUser(Scanner scanner) {
+        System.out.println("Nhập loại người dùng (Admin/Staff):");
+        String userType = scanner.next();
+
         System.out.println("Nhập tên người dùng:");
         String username = scanner.next();
         System.out.println("Nhập mật khẩu:");
         String password = scanner.next();
+        System.out.println("Nhập email:");
+        String email = scanner.next();
+        System.out.println("Nhập số điện thoại:");
+        String phoneNumber = scanner.next();
 
+        User user = null;
 
-        // Thêm vào CSDL thông qua UserDAO
+        // Sử dụng Factory để tạo đối tượng User tương ứng
+        if ("Admin".equalsIgnoreCase(userType)) {
+            // Sử dụng AdminFactory để tạo Admin
+            UserFactory adminFactory = new AdminFactory();
+            user = adminFactory.createUser(username, password, email, phoneNumber);
+        } else if ("Staff".equalsIgnoreCase(userType)) {
+            // Sử dụng StaffFactory để tạo Staff
+            UserFactory staffFactory = new StaffFactory();
+            user = staffFactory.createUser(username, password, email, phoneNumber);
+        } else {
+            System.out.println("Loại người dùng không hợp lệ.");
+            return;
+        }
+
+        // Sử dụng UserDAO để thêm người dùng vào CSDL
         UserDAO userDAO = new UserDAO();
-        userDAO.addUser(new User(username, password));
-        System.out.println("Đã thêm người dùng.");
+        userDAO.addUser(user);
+        System.out.println(userType + " đã được thêm.");
     }
+
 
     private static void updateUser(Scanner scanner) {
         System.out.println("Nhập ID người dùng cần sửa:");
         int userId = scanner.nextInt();
+        scanner.nextLine();  // Đọc newline sau khi nhập số
+
+        System.out.println("Nhập loại người dùng mới (Admin/Staff):");
+        String userType = scanner.next();
+
         System.out.println("Nhập tên người dùng mới:");
         String username = scanner.next();
         System.out.println("Nhập mật khẩu mới:");
         String password = scanner.next();
         System.out.println("Nhập email mới:");
         String email = scanner.next();
+        System.out.println("Nhập số điện thoại mới:");
+        String phoneNumber = scanner.next();
 
-        // Cập nhật người dùng
+        User user = null;
+
+        // Sử dụng Factory để tạo đối tượng User tương ứng
+        if ("Admin".equalsIgnoreCase(userType)) {
+            // Sử dụng AdminFactory để tạo Admin
+            UserFactory adminFactory = new AdminFactory();
+            user = adminFactory.createUser(username, password, email, phoneNumber);
+        } else if ("Staff".equalsIgnoreCase(userType)) {
+            // Sử dụng StaffFactory để tạo Staff
+            UserFactory staffFactory = new StaffFactory();
+            user = staffFactory.createUser(username, password, email, phoneNumber);
+        } else {
+            System.out.println("Loại người dùng không hợp lệ.");
+            return;
+        }
+
+        // Cập nhật người dùng trong CSDL
         UserDAO userDAO = new UserDAO();
-        userDAO.updateUser(new User(userId, username, password, email));
-        System.out.println("Đã cập nhật người dùng.");
+        userDAO.updateUser(userId, user);  // Giả sử bạn đã cập nhật phương thức updateUser trong UserDAO
+        System.out.println("Đã cập nhật thông tin người dùng.");
     }
 
     private static void deleteUser(Scanner scanner) {
@@ -431,29 +545,50 @@ public class MainApp {
     }
 
     private static void addCustomer(Scanner scanner) {
+        // Yêu cầu người dùng nhập thông tin đầy đủ cho khách hàng
         System.out.println("Nhập tên khách hàng:");
-        String customerName = scanner.next();
-        System.out.println("Nhập email khách hàng:");
-        String email = scanner.next();
+        String fullName = scanner.nextLine();  // Đọc tên khách hàng
 
-        // Thêm vào CSDL thông qua CustomerDAO
+        System.out.println("Nhập số điện thoại khách hàng:");
+        String phoneNumber = scanner.nextLine();  // Đọc số điện thoại
+
+        System.out.println("Nhập email khách hàng:");
+        String email = scanner.nextLine();  // Đọc email khách hàng
+
+        System.out.println("Nhập địa chỉ khách hàng:");
+        String address = scanner.nextLine();  // Đọc địa chỉ khách hàng
+
+        // Thêm khách hàng vào cơ sở dữ liệu thông qua CustomerDAO
         CustomerDAO customerDAO = new CustomerDAO();
-        customerDAO.addCustomer(new Customer(customerName, email));
+        customerDAO.addCustomer(new Customer(fullName, phoneNumber, email, address));
+
         System.out.println("Đã thêm khách hàng.");
     }
 
     private static void updateCustomer(Scanner scanner) {
         System.out.println("Nhập ID khách hàng cần sửa:");
         int customerId = scanner.nextInt();
-        System.out.println("Nhập tên khách hàng mới:");
-        String customerName = scanner.next();
-        System.out.println("Nhập email khách hàng mới:");
-        String email = scanner.next();
+        scanner.nextLine();  // Đọc ký tự newline còn sót lại
 
-        // Cập nhật khách hàng
+        System.out.println("Nhập tên khách hàng mới:");
+        String customerName = scanner.nextLine();
+
+        System.out.println("Nhập số điện thoại khách hàng mới:");
+        String phoneNumber = scanner.nextLine();
+
+        System.out.println("Nhập email khách hàng mới:");
+        String email = scanner.nextLine();
+
+        System.out.println("Nhập địa chỉ khách hàng mới:");
+        String address = scanner.nextLine();
+
+        // Cập nhật thông tin khách hàng
         CustomerDAO customerDAO = new CustomerDAO();
-        customerDAO.updateCustomer(new Customer(customerId, customerName, email));
-        System.out.println("Đã cập nhật khách hàng.");
+        Customer customer = new Customer(customerName, phoneNumber, email, address);
+        customer.setCustomerId(customerId);  // Gán ID cho khách hàng cần sửa
+
+        customerDAO.updateCustomer(customerId, customer);  // Gọi phương thức cập nhật trong CustomerDAO
+        System.out.println("Đã cập nhật thông tin khách hàng.");
     }
 
     private static void deleteCustomer(Scanner scanner) {
