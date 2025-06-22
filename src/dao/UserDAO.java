@@ -1,11 +1,9 @@
 package dao;
 
 import model.users.*;
+import factory.users.*;
 import java.sql.*;
 import java.util.*;
-
-import factory.users.*;
-
 
 public class UserDAO {
 
@@ -38,7 +36,6 @@ public class UserDAO {
         }
     }
 
-
     public void updateUser(int userId, User user) {
         String query = "UPDATE Users SET username = ?, password = ?, email = ?, phone_number = ?, role = ? WHERE user_id = ?";
 
@@ -48,7 +45,7 @@ public class UserDAO {
             stmt.setString(3, user.getEmail());
             stmt.setString(4, user.getPhoneNumber());
             stmt.setString(5, user.getRole());
-            stmt.setInt(6, userId);  // Cập nhật theo userId, không phải username
+            stmt.setInt(6, userId);  // Cập nhật theo userId
 
             int rowsAffected = stmt.executeUpdate();
             System.out.println("Rows affected: " + rowsAffected);
@@ -56,8 +53,6 @@ public class UserDAO {
             e.printStackTrace();
         }
     }
-
-
 
     // Lấy người dùng theo username
     public User getUserByUsername(String username) {
@@ -71,18 +66,8 @@ public class UserDAO {
                 String phoneNumber = rs.getString("phone_number");
                 String role = rs.getString("role");
 
-                UserFactory factory = null;
-
-                // Sử dụng Factory để tạo đối tượng User dựa trên role
-                if ("Admin".equalsIgnoreCase(role)) {
-                    factory = new AdminFactory();  // Factory cho Admin
-                } else if ("Staff".equalsIgnoreCase(role)) {
-                    factory = new StaffFactory();  // Factory cho Staff
-                }
-
-                if (factory != null) {
-                    return factory.createUser(username, password, email, phoneNumber);
-                }
+                // Sử dụng FactoryRegistry để tạo đối tượng User
+                return UserFactoryRegistry.createUser(role, username, password, email, phoneNumber);
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -105,14 +90,8 @@ public class UserDAO {
                 String phoneNumber = rs.getString("phone_number");
                 String role = rs.getString("role");
 
-                // Tạo đối tượng User theo vai trò (Admin hoặc Staff)
-                User user = null;
-
-                if ("Admin".equalsIgnoreCase(role)) {
-                    user = new Admin(username, password, email, phoneNumber);  // Tạo đối tượng Admin
-                } else if ("Staff".equalsIgnoreCase(role)) {
-                    user = new Staff(username, password, email, phoneNumber);  // Tạo đối tượng Staff
-                }
+                // Sử dụng FactoryRegistry để tạo đối tượng User
+                User user = UserFactoryRegistry.createUser(role, username, password, email, phoneNumber);
 
                 if (user != null) {
                     user.setUserId(userId);  // Gán userId vào đối tượng user
@@ -124,8 +103,6 @@ public class UserDAO {
         }
         return users;  // Trả về danh sách người dùng
     }
-
-
 
     public void deleteUser(int userId) {
         String query = "DELETE FROM Users WHERE user_id = ?";  // Câu lệnh xóa người dùng theo userId
@@ -144,7 +121,6 @@ public class UserDAO {
         }
     }
 
-
     // Lấy người dùng theo username và password
     public User getUserByUsernameAndPassword(String username, String password) {
         String query = "SELECT * FROM Users WHERE username = ? AND password = ?";
@@ -157,16 +133,8 @@ public class UserDAO {
                 String email = rs.getString("email");
                 String phoneNumber = rs.getString("phone_number");
 
-                UserFactory factory = null;
-                if ("Admin".equalsIgnoreCase(role)) {
-                    factory = new AdminFactory();
-                } else if ("Staff".equalsIgnoreCase(role)) {
-                    factory = new StaffFactory();
-                }
-
-                if (factory != null) {
-                    return factory.createUser(username, password, email, phoneNumber);
-                }
+                // Sử dụng FactoryRegistry để tạo đối tượng User
+                return UserFactoryRegistry.createUser(role, username, password, email, phoneNumber);
             }
         } catch (SQLException e) {
             e.printStackTrace();
