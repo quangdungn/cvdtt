@@ -1,9 +1,9 @@
 package dao;
 
-import model.products.Product;
-import model.products.Electronics;
 import model.products.Clothing;
-import factory.products.*;
+import model.products.Electronics;
+import model.products.Product;
+import factory.products.ProductCreatorRegistry;
 
 import java.sql.*;
 import java.util.List;
@@ -16,15 +16,15 @@ public class ProductDAO {
         connection = DatabaseConnection.getInstance().getConnection();
     }
 
-    // Thêm sản phẩm
+    // Add product to the database
     public void addProduct(Product product, int categoryId) {
         String attributes = null;
 
-        // Lấy thuộc tính tương ứng với loại sản phẩm
+        // No need for instanceof, ProductCreator handles this now
         if (product instanceof Electronics) {
-            attributes = ((Electronics) product).getBrand();  // brand cho Electronics
+            attributes = ((Electronics) product).getBrand();
         } else if (product instanceof Clothing) {
-            attributes = ((Clothing) product).getSize();  // size cho Clothing
+            attributes = ((Clothing) product).getSize();
         }
 
         String query = "INSERT INTO Products (product_name, price, stock_quantity, description, attributes) VALUES (?, ?, ?, ?, ?)";
@@ -33,15 +33,15 @@ public class ProductDAO {
             stmt.setDouble(2, product.getPrice());
             stmt.setInt(3, product.getStockQuantity());
             stmt.setString(4, product.getDescription());
-            stmt.setString(5, attributes);  // Lưu vào cột attributes
+            stmt.setString(5, attributes);
             stmt.executeUpdate();
 
-            // Lấy product_id của sản phẩm mới thêm vào
+            // Get the generated product_id
             ResultSet generatedKeys = stmt.getGeneratedKeys();
             if (generatedKeys.next()) {
-                int productId = generatedKeys.getInt(1);  // Lấy ID được tự động sinh ra
+                int productId = generatedKeys.getInt(1);
 
-                // Thêm vào bảng Product_Categories để liên kết sản phẩm với danh mục
+                // Insert into Product_Categories table
                 String categoryQuery = "INSERT INTO Product_Categories (product_id, category_id) VALUES (?, ?)";
                 try (PreparedStatement categoryStmt = connection.prepareStatement(categoryQuery)) {
                     categoryStmt.setInt(1, productId);
@@ -54,7 +54,39 @@ public class ProductDAO {
         }
     }
 
-    // Cập nhật thông tin sản phẩm (Không dùng getId())
+    // Get product by ID
+    public Product getProductById(int id) {
+        String query = "SELECT * FROM Products WHERE product_id = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setInt(1, id);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                String name = rs.getString("product_name");
+                double price = rs.getDouble("price");
+                String description = rs.getString("description");
+                int stockQuantity = rs.getInt("stock_quantity");
+                String attributes = rs.getString("attributes");
+
+                // Get category name
+                String categoryQuery = "SELECT c.category_name FROM Categories c " +
+                        "JOIN Product_Categories pc ON c.category_id = pc.category_id " +
+                        "WHERE pc.product_id = ?";
+                try (PreparedStatement categoryStmt = connection.prepareStatement(categoryQuery)) {
+                    categoryStmt.setInt(1, id);
+                    ResultSet categoryRs = categoryStmt.executeQuery();
+                    if (categoryRs.next()) {
+                        String category = categoryRs.getString("category_name");
+
+                        // Use Factory Method to create the product
+                        return ProductCreatorRegistry.createProduct(category, name, price, description, stockQuantity, attributes);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
     public void updateProduct(int productId, Product product, int categoryId) {
         String attributes = null;
 
@@ -89,51 +121,7 @@ public class ProductDAO {
         }
     }
 
-    // Lấy sản phẩm theo ID
-    public Product getProductById(int id) {
-        String query = "SELECT * FROM Products WHERE product_id = ?";
-        try (PreparedStatement stmt = connection.prepareStatement(query)) {
-            stmt.setInt(1, id);
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                String name = rs.getString("product_name");
-                double price = rs.getDouble("price");
-                String description = rs.getString("description");
-                int stockQuantity = rs.getInt("stock_quantity");
-                String attributes = rs.getString("attributes");  // Lấy thông tin attributes
-
-                // Lấy category_name từ bảng Product_Categories
-                String categoryQuery = "SELECT c.category_name FROM Categories c " +
-                        "JOIN Product_Categories pc ON c.category_id = pc.category_id " +
-                        "WHERE pc.product_id = ?";
-                try (PreparedStatement categoryStmt = connection.prepareStatement(categoryQuery)) {
-                    categoryStmt.setInt(1, id);  // Set product_id vào query
-                    ResultSet categoryRs = categoryStmt.executeQuery();
-                    if (categoryRs.next()) {
-                        String category = categoryRs.getString("category_name");
-
-                        // Dùng Factory Method để tạo đối tượng sản phẩm tương ứng
-                        ProductCreator creator = null;
-                        if ("Electronics".equalsIgnoreCase(category)) {
-                            creator = new ElectronicsCreator();  // Tạo ElectronicsCreator
-                        } else if ("Clothing".equalsIgnoreCase(category)) {
-                            creator = new ClothingCreator();  // Tạo ClothingCreator
-                        }
-
-                        // Tạo đối tượng sản phẩm và trả về
-                        if (creator != null) {
-                            return creator.createProduct(name, price, description, stockQuantity, attributes);  // Gọi createProduct với tham số
-                        }
-                    }
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return null;  // Nếu không tìm thấy sản phẩm, trả về null
-    }
-
-    // Lấy tất cả sản phẩm
+    // Get all products
     public List<Product> getAllProducts() {
         List<Product> products = new ArrayList<>();
         String query = "SELECT * FROM Products";
@@ -144,9 +132,9 @@ public class ProductDAO {
                 double price = rs.getDouble("price");
                 String description = rs.getString("description");
                 int stockQuantity = rs.getInt("stock_quantity");
-                String attributes = rs.getString("attributes");  // Lấy thông tin attributes
+                String attributes = rs.getString("attributes");
 
-                // Lấy category_name từ bảng Product_Categories
+                // Get category name
                 String categoryQuery = "SELECT c.category_name FROM Categories c " +
                         "JOIN Product_Categories pc ON c.category_id = pc.category_id " +
                         "WHERE pc.product_id = ?";
@@ -156,16 +144,10 @@ public class ProductDAO {
                     if (categoryRs.next()) {
                         String category = categoryRs.getString("category_name");
 
-                        // Sử dụng Factory Method để tạo đối tượng sản phẩm tương ứng
-                        ProductCreator creator = null;
-                        if ("Electronics".equalsIgnoreCase(category)) {
-                            creator = new ElectronicsCreator();  // Tạo ElectronicsCreator
-                        } else if ("Clothing".equalsIgnoreCase(category)) {
-                            creator = new ClothingCreator();  // Tạo ClothingCreator
-                        }
-
-                        if (creator != null) {
-                            products.add(creator.createProduct( name, price, description, stockQuantity, attributes));  // Gọi createProduct với tham số
+                        // Use Factory Method to create the product
+                        Product product = ProductCreatorRegistry.createProduct(category, name, price, description, stockQuantity, attributes);
+                        if (product != null) {
+                            products.add(product);
                         }
                     }
                 }
@@ -176,13 +158,13 @@ public class ProductDAO {
         return products;
     }
 
-    // Xóa sản phẩm
+    // Delete product
     public void deleteProduct(int id) {
         String query = "DELETE FROM Products WHERE product_id = ?";
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
             stmt.setInt(1, id);
             int rowsAffected = stmt.executeUpdate();
-            System.out.println("Rows affected: " + rowsAffected);  // Kiểm tra số dòng bị ảnh hưởng
+            System.out.println("Rows affected: " + rowsAffected);
         } catch (SQLException e) {
             e.printStackTrace();
         }

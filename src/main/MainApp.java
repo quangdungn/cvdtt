@@ -15,18 +15,14 @@ import model.customers.*;
 public class MainApp {
 
     public static void main(String[] args) {
-        boolean ok = true;
-        User loggedInUser = LoginSystem.login();  // Đăng nhập hệ thống
-        if (loggedInUser == null) {
-            System.out.println("Vui lòng nhập lại.");
-        }
-        else {ok = false;}  // Nếu đăng nhập thành công thì tiếp tục
-        while (ok) {
-            loggedInUser = LoginSystem.login();
+        User loggedInUser = null;
+
+        // Đăng nhập người dùng
+        while (loggedInUser == null) {
+            loggedInUser = LoginSystem.login();  // Đăng nhập hệ thống
             if (loggedInUser == null) {
                 System.out.println("Vui lòng nhập lại.");
             }
-            else break;  // Nếu đăng nhập thành công thì thoát khỏi vòng lặp
         }
 
         System.out.println("Đã đăng nhập với quyền: " + loggedInUser.getRole());
@@ -158,7 +154,7 @@ public class MainApp {
                 System.out.println("Lựa chọn không hợp lệ.");
             }
         }
-
+// Tính tổng số tiền của đơn hàng
         double totalAmount = 0;
         System.out.println("\nSản phẩm trong đơn hàng:");
         for (Product product : orderProducts) {
@@ -167,6 +163,7 @@ public class MainApp {
         }
         System.out.println("Tổng số tiền: " + totalAmount + " VND");
 
+// Chọn phương thức thanh toán
         System.out.println("Chọn phương thức thanh toán:");
         System.out.println("1. Chuyển khoản ngân hàng");
         System.out.println("2. Thẻ tín dụng");
@@ -175,7 +172,9 @@ public class MainApp {
         int paymentChoice = scanner.nextInt();
         scanner.nextLine();
 
+// Khởi tạo PaymentStrategy
         PaymentStrategy paymentStrategy = null;
+
         switch (paymentChoice) {
             case 1:
                 paymentStrategy = new BankTransferPayment();
@@ -184,10 +183,10 @@ public class MainApp {
                 paymentStrategy = new CreditCardPayment();
                 break;
             case 3:
-                paymentStrategy = new PayPalPaymentAdapter(new PayPalPayment());
+                paymentStrategy = new PayPalPaymentAdapter(new PayPalPayment());  // Sử dụng PayPal Adapter
                 break;
             case 4:
-                paymentStrategy = new StripePaymentAdapter(new StripePayment());
+                paymentStrategy = new StripePaymentAdapter(new StripePayment());  // Sử dụng Stripe Adapter
                 break;
             default:
                 System.out.println("Lựa chọn không hợp lệ, mặc định chọn 'Chuyển khoản ngân hàng'");
@@ -195,7 +194,10 @@ public class MainApp {
                 break;
         }
 
-        paymentStrategy.pay(totalAmount);
+// Sử dụng PaymentContext để thực hiện thanh toán
+        PaymentContext paymentContext = new PaymentContext(paymentStrategy);
+        paymentContext.executePayment(totalAmount);
+
         System.out.println("Đơn hàng đã được tạo thành công.");
     }
     private static void updateOrder(Scanner scanner) {

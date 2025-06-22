@@ -1,23 +1,42 @@
 package model.products;
 
-public class Clothing extends Product {
+public class Clothing implements Product {
+    private String name;
+    private double price;
+    private String description;
+    private int stockQuantity;
     private String size;
 
     public Clothing(String name, double price, String description, int stockQuantity, String size) {
-        super(name, price, description, stockQuantity);
+        this.name = name;
+        this.price = price;
+        this.description = description;
+        this.stockQuantity = stockQuantity;
         this.size = size;
     }
 
-    public void setSize(String size) {
-        this.size = size;
+    public String getName() {
+        return name;
     }
+
+    public double getPrice() {
+        return price;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public int getStockQuantity() {
+        return stockQuantity;
+    }
+
     public String getSize() {
         return size;
     }
 
-    @Override
     public void displayProductDetails() {
-        System.out.println("Sản phẩm quần áo");
-        System.out.println("Tên: " + name + ", Giá: " + price + ", Kích cỡ: " + size + ", Mô tả: " + description + ", Số lượng tồn kho: " + stockQuantity);
+        System.out.println("Clothing Product: ");
+        System.out.println("Name: " + name + ", Price: " + price + ", Size: " + size + ", Description: " + description + ", Stock Quantity: " + stockQuantity);
     }
 }

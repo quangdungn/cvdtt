@@ -2,8 +2,8 @@ package dao;
 
 import model.orders.*;
 import factory.orders.*;
-import java.util.*;
 import java.sql.*;
+import java.util.*;
 
 public class OrderDAO {
 
@@ -72,17 +72,8 @@ public class OrderDAO {
                 String orderDate = rs.getString("order_date");
                 String status = rs.getString("status");
 
-                // Dùng Factory Method để tạo đối tượng sản phẩm tương ứng
-                OrderCreator creator = null;
-                if ("Express".equalsIgnoreCase(status)) {
-                    creator = new ExpressOrderCreator();
-                } else if ("Standard".equalsIgnoreCase(status)) {
-                    creator = new StandardOrderCreator();
-                }
-
-                if (creator != null) {
-                    return creator.createOrder(customerId, totalAmount, orderDate, status);
-                }
+                // Sử dụng FactoryRegistry để tạo đơn hàng tương ứng
+                return OrderCreatorRegistry.createOrder(status, customerId, totalAmount, orderDate);
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -90,6 +81,7 @@ public class OrderDAO {
         return null;  // Nếu không tìm thấy đơn hàng
     }
 
+    // Lấy tất cả đơn hàng
     public List<Order> getAllOrders() {
         List<Order> orders = new ArrayList<>();
         String query = "SELECT * FROM Orders";
@@ -97,29 +89,16 @@ public class OrderDAO {
         try (Statement stmt = connection.createStatement()) {
             ResultSet rs = stmt.executeQuery(query);
 
-            // Kiểm tra dữ liệu trả về từ ResultSet
-            int rowCount = 0;  // Đếm số lượng đơn hàng
             while (rs.next()) {
-                rowCount++;  // Tăng đếm số lượng đơn hàng
-
                 int orderId = rs.getInt("order_id");
                 int customerId = rs.getInt("customer_id");
                 double totalAmount = rs.getDouble("total_amount");
                 String orderDate = rs.getString("order_date");
                 String status = rs.getString("status");
 
-                // Tạo đối tượng Order và thêm vào danh sách
-                OrderCreator creator = null;
-                if ("Express".equalsIgnoreCase(status)) {
-                    creator = new ExpressOrderCreator();
-
-                } else if ("Standard".equalsIgnoreCase(status)) {
-                    creator = new StandardOrderCreator();
-
-                }
-
-                if (creator != null) {
-                    Order order = creator.createOrder(customerId, totalAmount, orderDate, status);
+                // Sử dụng FactoryRegistry để tạo đơn hàng tương ứng
+                Order order = OrderCreatorRegistry.createOrder(status, customerId, totalAmount, orderDate);
+                if (order != null) {
                     orders.add(order);
                 }
             }
@@ -130,32 +109,9 @@ public class OrderDAO {
 
         return orders;
     }
+
+    // Xóa đơn hàng
     public void deleteOrder(int orderId) {
-        // Xóa các bản ghi trong bảng payments có liên quan đến orderId
-        String deletePaymentsQuery = "DELETE FROM payments WHERE order_id = ?";
-        try (PreparedStatement stmt = connection.prepareStatement(deletePaymentsQuery)) {
-            stmt.setInt(1, orderId);  // Gán orderId vào câu lệnh SQL
-            int rowsAffected = stmt.executeUpdate();  // Thực hiện xóa
-            if (rowsAffected > 0) {
-                System.out.println("Đã xóa các bản ghi thanh toán cho orderId: " + orderId);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        // Xóa các mục trong bảng order_items có liên quan đến orderId
-        String deleteItemsQuery = "DELETE FROM order_items WHERE order_id = ?";
-        try (PreparedStatement stmt = connection.prepareStatement(deleteItemsQuery)) {
-            stmt.setInt(1, orderId);  // Gán orderId vào câu lệnh SQL
-            int rowsAffected = stmt.executeUpdate();  // Thực hiện xóa
-            if (rowsAffected > 0) {
-                System.out.println("Đã xóa các mục trong order_items cho orderId: " + orderId);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        // Xóa đơn hàng trong bảng orders
         String deleteOrderQuery = "DELETE FROM Orders WHERE order_id = ?";
         try (PreparedStatement stmt = connection.prepareStatement(deleteOrderQuery)) {
             stmt.setInt(1, orderId);  // Gán orderId vào câu lệnh SQL
@@ -167,5 +123,4 @@ public class OrderDAO {
             e.printStackTrace();
         }
     }
-
 }

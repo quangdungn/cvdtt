@@ -1,6 +1,5 @@
 package model.users;
 
-
 public interface User {
     void login();
     void logout();
@@ -11,4 +10,5 @@ public interface User {
     String getPassword();
     void setUserId(int userId);
     int getUserId();
+    String toString();
 }

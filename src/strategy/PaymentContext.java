@@ -1,6 +1,6 @@
 package strategy;
 
-public class    PaymentContext {
+public class PaymentContext {
     private PaymentStrategy paymentStrategy;
 
     public PaymentContext(PaymentStrategy paymentStrategy) {

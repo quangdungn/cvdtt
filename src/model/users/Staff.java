@@ -61,4 +61,9 @@ public class Staff implements User {
     public int getUserId() {
         return userId;
     }
+
+    @Override
+    public String toString(){
+        return "User ID: " + userId + ", Username: " + username + ", Email: " + email + ", Phone: " + phoneNumber + ", Role: " + role;
+    }
 }
