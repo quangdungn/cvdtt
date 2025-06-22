@@ -12,7 +12,6 @@ public class CustomerDAO {
         connection = DatabaseConnection.getInstance().getConnection();
     }
 
-    // Thêm khách hàng
     public void addCustomer(Customer customer) {
         String query = "INSERT INTO Customers (full_name, phone_number, email, address) VALUES (?, ?, ?, ?)";
 
@@ -24,10 +23,9 @@ public class CustomerDAO {
 
             int rowsAffected = stmt.executeUpdate();
             if (rowsAffected > 0) {
-                // Lấy customer_id (do cơ sở dữ liệu tự động sinh ra)
                 ResultSet generatedKeys = stmt.getGeneratedKeys();
                 if (generatedKeys.next()) {
-                    customer.setCustomerId(generatedKeys.getInt(1));  // Gán customer_id
+                    customer.setCustomerId(generatedKeys.getInt(1));
                 }
             }
         } catch (SQLException e) {
@@ -35,7 +33,6 @@ public class CustomerDAO {
         }
     }
 
-    // Cập nhật thông tin khách hàng
     public void updateCustomer(int customerId, Customer customer) {
         String query = "UPDATE Customers SET full_name = ?, phone_number = ?, email = ?, address = ? WHERE customer_id = ?";
 
@@ -44,7 +41,7 @@ public class CustomerDAO {
             stmt.setString(2, customer.getPhoneNumber());
             stmt.setString(3, customer.getEmail());
             stmt.setString(4, customer.getAddress());
-            stmt.setInt(5, customerId);  // Cập nhật theo customer_id
+            stmt.setInt(5, customerId);
 
             stmt.executeUpdate();
         } catch (SQLException e) {
@@ -52,7 +49,6 @@ public class CustomerDAO {
         }
     }
 
-    // Lấy khách hàng theo customer_id
     public Customer getCustomerById(int customerId) {
         String query = "SELECT * FROM Customers WHERE customer_id = ?";
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
@@ -64,15 +60,14 @@ public class CustomerDAO {
                 String email = rs.getString("email");
                 String address = rs.getString("address");
 
-                return new Customer(fullName, phoneNumber, email, address);  // Tạo đối tượng Customer
+                return new Customer(fullName, phoneNumber, email, address);
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return null;  // Nếu không tìm thấy khách hàng
+        return null;
     }
 
-    // Lấy tất cả khách hàng
     public List<Customer> getAllCustomers() {
         List<Customer> customers = new ArrayList<>();
         String query = "SELECT * FROM Customers";
@@ -93,10 +88,9 @@ public class CustomerDAO {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return customers;  // Trả về danh sách tất cả khách hàng
+        return customers;
     }
 
-    // Xóa khách hàng
     public void deleteCustomer(int customerId) {
         String query = "DELETE FROM Customers WHERE customer_id = ?";
 

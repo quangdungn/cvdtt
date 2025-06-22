@@ -10,12 +10,11 @@ public class DatabaseConnection {
 
     private DatabaseConnection() {
         try {
-            // Kiểm tra nếu bạn cần thay đổi tên database hoặc thông tin đăng nhập
             connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/salesmanagements?useSSL=false&serverTimezone=UTC", "root", "");
             System.out.println("Connection successful!");
         } catch (SQLException e) {
             System.err.println("Connection failed: " + e.getMessage());
-            e.printStackTrace(); // In ra chi tiết lỗi
+            e.printStackTrace();
         }
     }
 

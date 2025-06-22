@@ -434,6 +434,7 @@ public class MainApp {
 
         User user = null;
 
+
         // Sử dụng Factory để tạo đối tượng User tương ứng
         if ("Admin".equalsIgnoreCase(userType)) {
             // Sử dụng AdminFactory để tạo Admin

@@ -14,29 +14,24 @@ public class Clothing implements Product {
         this.stockQuantity = stockQuantity;
         this.size = size;
     }
-
     public String getName() {
         return name;
     }
-
     public double getPrice() {
         return price;
     }
-
     public String getDescription() {
         return description;
     }
-
     public int getStockQuantity() {
         return stockQuantity;
     }
-
     public String getSize() {
         return size;
     }
 
     public void displayProductDetails() {
-        System.out.println("Clothing Product: ");
-        System.out.println("Name: " + name + ", Price: " + price + ", Size: " + size + ", Description: " + description + ", Stock Quantity: " + stockQuantity);
+        System.out.print("Sản phẩm thời trang - ");
+        System.out.println("Tên: " + name + ", Giá: " + price + ", Size: " + size + ", Mô tả: " + description + ", Số lượng: " + stockQuantity);
     }
 }

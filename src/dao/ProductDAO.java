@@ -16,11 +16,9 @@ public class ProductDAO {
         connection = DatabaseConnection.getInstance().getConnection();
     }
 
-    // Add product to the database
     public void addProduct(Product product, int categoryId) {
         String attributes = null;
 
-        // No need for instanceof, ProductCreator handles this now
         if (product instanceof Electronics) {
             attributes = ((Electronics) product).getBrand();
         } else if (product instanceof Clothing) {
@@ -36,12 +34,10 @@ public class ProductDAO {
             stmt.setString(5, attributes);
             stmt.executeUpdate();
 
-            // Get the generated product_id
             ResultSet generatedKeys = stmt.getGeneratedKeys();
             if (generatedKeys.next()) {
                 int productId = generatedKeys.getInt(1);
 
-                // Insert into Product_Categories table
                 String categoryQuery = "INSERT INTO Product_Categories (product_id, category_id) VALUES (?, ?)";
                 try (PreparedStatement categoryStmt = connection.prepareStatement(categoryQuery)) {
                     categoryStmt.setInt(1, productId);
@@ -54,7 +50,6 @@ public class ProductDAO {
         }
     }
 
-    // Get product by ID
     public Product getProductById(int id) {
         String query = "SELECT * FROM Products WHERE product_id = ?";
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
@@ -67,7 +62,6 @@ public class ProductDAO {
                 int stockQuantity = rs.getInt("stock_quantity");
                 String attributes = rs.getString("attributes");
 
-                // Get category name
                 String categoryQuery = "SELECT c.category_name FROM Categories c " +
                         "JOIN Product_Categories pc ON c.category_id = pc.category_id " +
                         "WHERE pc.product_id = ?";
@@ -76,8 +70,6 @@ public class ProductDAO {
                     ResultSet categoryRs = categoryStmt.executeQuery();
                     if (categoryRs.next()) {
                         String category = categoryRs.getString("category_name");
-
-                        // Use Factory Method to create the product
                         return ProductCreatorRegistry.createProduct(category, name, price, description, stockQuantity, attributes);
                     }
                 }
@@ -89,31 +81,27 @@ public class ProductDAO {
     }
     public void updateProduct(int productId, Product product, int categoryId) {
         String attributes = null;
-
-        // Lấy thuộc tính tương ứng với loại sản phẩm
         if (product instanceof Electronics) {
-            attributes = ((Electronics) product).getBrand();  // brand cho Electronics
+            attributes = ((Electronics) product).getBrand();
         } else if (product instanceof Clothing) {
-            attributes = ((Clothing) product).getSize();  // size cho Clothing
+            attributes = ((Clothing) product).getSize();
         }
 
-        // Sửa phương thức update để không sử dụng getId(), chỉ dùng product_id trong CSDL
         String query = "UPDATE Products SET product_name = ?, price = ?, stock_quantity = ?, description = ?, attributes = ? WHERE product_id = ?";
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
             stmt.setString(1, product.getName());
             stmt.setDouble(2, product.getPrice());
             stmt.setInt(3, product.getStockQuantity());
             stmt.setString(4, product.getDescription());
-            stmt.setString(5, attributes);  // Cập nhật attributes
-            stmt.setInt(6, productId);  // Dùng productId truyền vào, không cần getId()
+            stmt.setString(5, attributes);
+            stmt.setInt(6, productId);
             int rowsAffected = stmt.executeUpdate();
-            System.out.println("Rows affected: " + rowsAffected);  // Kiểm tra số dòng bị ảnh hưởng
+            System.out.println("Rows affected: " + rowsAffected);
 
-            // Cập nhật liên kết sản phẩm với danh mục trong bảng Product_Categories
             String categoryQuery = "UPDATE Product_Categories SET category_id = ? WHERE product_id = ?";
             try (PreparedStatement categoryStmt = connection.prepareStatement(categoryQuery)) {
                 categoryStmt.setInt(1, categoryId);
-                categoryStmt.setInt(2, productId);  // Dùng productId truyền vào
+                categoryStmt.setInt(2, productId);
                 categoryStmt.executeUpdate();
             }
         } catch (SQLException e) {
@@ -121,7 +109,6 @@ public class ProductDAO {
         }
     }
 
-    // Get all products
     public List<Product> getAllProducts() {
         List<Product> products = new ArrayList<>();
         String query = "SELECT * FROM Products";
@@ -134,7 +121,6 @@ public class ProductDAO {
                 int stockQuantity = rs.getInt("stock_quantity");
                 String attributes = rs.getString("attributes");
 
-                // Get category name
                 String categoryQuery = "SELECT c.category_name FROM Categories c " +
                         "JOIN Product_Categories pc ON c.category_id = pc.category_id " +
                         "WHERE pc.product_id = ?";
@@ -143,8 +129,6 @@ public class ProductDAO {
                     ResultSet categoryRs = categoryStmt.executeQuery();
                     if (categoryRs.next()) {
                         String category = categoryRs.getString("category_name");
-
-                        // Use Factory Method to create the product
                         Product product = ProductCreatorRegistry.createProduct(category, name, price, description, stockQuantity, attributes);
                         if (product != null) {
                             products.add(product);
@@ -158,7 +142,6 @@ public class ProductDAO {
         return products;
     }
 
-    // Delete product
     public void deleteProduct(int id) {
         String query = "DELETE FROM Products WHERE product_id = ?";
         try (PreparedStatement stmt = connection.prepareStatement(query)) {

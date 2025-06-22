@@ -11,7 +11,6 @@ public class ProductCreatorRegistry {
     static {
         creatorMap.put("Electronics", new ElectronicsCreator());
         creatorMap.put("Clothing", new ClothingCreator());
-        // Add more creators here when new product types are added (e.g., FurnitureCreator, BookCreator)
     }
 
     // Method to create product using the registry
@@ -20,10 +19,9 @@ public class ProductCreatorRegistry {
         if (creator != null) {
             return creator.createProduct(name, price, description, stockQuantity, attribute);
         }
-        return null;  // Return null if no creator is found for the category
+        return null;
     }
 
-    // Method to register new creators for new product types
     public static void registerCreator(String category, ProductCreator creator) {
         creatorMap.put(category, creator);
     }

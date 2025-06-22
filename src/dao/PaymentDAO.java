@@ -13,22 +13,19 @@ public class PaymentDAO {
         connection = DatabaseConnection.getInstance().getConnection();
     }
 
-    // Thêm thanh toán
     public void addPayment(Payment payment) {
         String query = "INSERT INTO Payments (order_id, payment_method, amount, payment_date) VALUES (?, ?, ?, ?)";
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
             stmt.setInt(1, payment.getOrderId());
-            // Chuyển đổi enum thành chuỗi (tương thích với ENUM trong MySQL)
-            stmt.setString(2, payment.getPaymentMethod().name().replace("_", " "));  // Ví dụ: CREDIT_CARD => 'Credit Card'
+            stmt.setString(2, payment.getPaymentMethod().name().replace("_", " "));
             stmt.setDouble(3, payment.getAmount());
-            stmt.setString(4, payment.getPaymentDate());  // paymentDate có thể là String, nên không cần chuyển
+            stmt.setString(4, payment.getPaymentDate());
             stmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
-    // Lấy thanh toán theo Order ID
     public Payment getPaymentByOrderId(int orderId) {
         String query = "SELECT * FROM Payments WHERE order_id = ?";
         try (PreparedStatement stmt = connection.prepareStatement(query)) {

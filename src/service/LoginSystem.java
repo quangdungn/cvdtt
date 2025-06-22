@@ -22,11 +22,9 @@ public class LoginSystem {
         if (user != null) {
             System.out.println("Đăng nhập thành công với " + user.getRole());
 
-            // Sử dụng Factory Registry để tạo người dùng dựa trên vai trò
             User createdUser = UserFactoryRegistry.createUser(user.getRole(), username, password, user.getEmail(), user.getPhoneNumber());
 
             if (createdUser != null) {
-                // Quản lý người dùng sau khi đăng nhập thông qua factory
                 System.out.println("Quản lý người dùng: " + createdUser.getUsername());
                 createdUser.login();
             }

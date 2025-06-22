@@ -5,8 +5,8 @@ import model.users.User;
 public abstract class UserFactory {
     public abstract User createUser(String username, String password, String email, String phoneNumber);
 
-    public void manageRoloUser(User user) {
-        System.out.println("Managing user: " + user.getUsername());
+    public void manageUser(User user) {
+        System.out.println("Đang quản lý với người dùng: " + user.getUsername());
         user.login();
     }
 }

@@ -36,7 +36,7 @@ public class Electronics implements Product {
     }
 
     public void displayProductDetails() {
-        System.out.println("Electronics Product: ");
-        System.out.println("Name: " + name + ", Price: " + price + ", Brand: " + brand + ", Description: " + description + ", Stock Quantity: " + stockQuantity);
+        System.out.print("Sản phẩm điện tử - ");
+        System.out.println("Tên : " + name + ", Giá: " + price + ", Nhãn hàng: " + brand + ", Mô tả: " + description + ", Số lượng: " + stockQuantity);
     }
 }

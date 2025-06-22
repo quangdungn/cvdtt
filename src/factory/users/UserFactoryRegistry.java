@@ -20,4 +20,8 @@ public class UserFactoryRegistry {
         }
         return null;
     }
+
+    public void registerUserFactory(String role, UserFactory user){
+        factoryMap.put(role, user);
+    }
 }
